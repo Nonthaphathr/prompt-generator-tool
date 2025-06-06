@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>เครื่องมือสร้าง Prompt</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .step-container {
+            margin-bottom: 40px;
+            padding: 30px;
+            border-radius: 15px;
+            position: relative;
+        }
+
+        .step-1 {
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+        }
+
+        .step-2 {
+            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+            opacity: 0.5;
+            pointer-events: none;
+            transition: all 0.3s ease;
+        }
+
+        .step-2.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .step-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .step-badge {
+            background: rgba(255, 255, 255, 0.8);
+            color: #333;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 1rem;
+            font-weight: 600;
+            backdrop-filter: blur(5px);
+        }
+
+        .step-description {
+            color: #555;
+            margin-bottom: 20px;
+            font-size: 1.1rem;
+            line-height: 1.6;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 150px;
+            padding: 15px;
+            border: 2px solid #e1e8ed;
+            border-radius: 10px;
+            font-size: 16px;
+            font-family: inherit;
+            resize: vertical;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            background: white;
+        }
+
+        .generate-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+            width: 100%;
+        }
+
+        .generate-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+        }
+
+        .generate-btn:active {
+            transform: translateY(0);
+        }
+
+        .generate-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .result-section {
+            margin-top: 25px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 15px;
+            display: none;
+            backdrop-filter: blur(5px);
+        }
+
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .result-title {
+            color: #333;
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+
+        .copy-btn {
+            background: rgba(102, 126, 234, 0.2);
+            color: #667eea;
+            border: 2px solid rgba(102, 126, 234, 0.3);
+            padding: 8px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .copy-btn:hover {
+            background: rgba(102, 126, 234, 0.3);
+            border-color: rgba(102, 126, 234, 0.5);
+        }
+
+        .result-content {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 10px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            border: 1px solid #e1e8ed;
+        }
+
+        .instructions {
+            background: linear-gradient(135deg, #e0f2e7 0%, #f0f8ff 100%);
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            border-left: 5px solid #28a745;
+        }
+
+        .instructions h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+
+        .instructions ol {
+            color: #555;
+            padding-left: 20px;
+        }
+
+        .instructions li {
+            margin-bottom: 8px;
+            line-height: 1.6;
+        }
+
+        .instructions strong {
+            color: #28a745;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #28a745;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(40, 167, 69, 0.3);
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .success-icon {
+            color: #28a745;
+            font-size: 1.2rem;
+            margin-right: 8px;
+        }
+
+        .arrow-connector {
+            text-align: center;
+            margin: 20px 0;
+            font-size: 2rem;
+            color: #667eea;
+            opacity: 0.7;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .content {
+                padding: 20px;
+            }
+            
+            .step-container {
+                padding: 20px;
+            }
+            
+            .result-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .step-title {
+                font-size: 1.5rem;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 เครื่องมือสร้าง Prompt แบบ 2 ขั้นตอน</h1>
+            <p>จากเนื้อหาดิบ → เนื้อหาจัดเรียง → เกม Interactive</p>
+        </div>
+        
+        <div class="content">
+            <div class="instructions">
+                <h3>📋 วิธีใช้งาน:</h3>
+                <ol>
+                    <li><strong>ขั้นตอนที่ 1:</strong> ใส่เนื้อหาดิบ → สร้าง Prompt สำหรับ AI → นำไปใช้กับ ChatGPT/Claude</li>
+                    <li><strong>ขั้นตอนที่ 2:</strong> นำผลลัพธ์ที่ได้จาก AI มาใส่ → สร้าง Prompt สำหรับ Canva → นำไปสร้างเกม</li>
+                    <li><strong>ผลลัพธ์:</strong> ได้เนื้อหาจัดเรียง + เกม Interactive ครบชุด</li>
+                </ol>
+            </div>
+
+            <!-- Step 1 -->
+            <div class="step-container step-1">
+                <div class="step-title">
+                    <span class="step-badge">ขั้นตอนที่ 1</span>
+                    📝 สร้าง Prompt สำหรับจัดเรียงเนื้อหา
+                </div>
+                <div class="step-description">
+                    นำเนื้อหาดิบที่มีมาใส่ในช่องด้านล่าง แล้วกดสร้าง Prompt เพื่อให้ AI จัดเรียงเนื้อหาเป็นระบบ
+                </div>
+
+                <div class="form-group">
+                    <label for="raw-content">📚 เนื้อหาดิบที่ต้องการจัดเรียง:</label>
+                    <textarea 
+                        id="raw-content" 
+                        placeholder="วางเนื้อหาวิชาของคุณตรงนี้...
+
+ตัวอย่าง:
+- เนื้อหาจากหนังสือเรียน
+- บันทึกการสอน  
+- เอกสารอ้างอิง
+- สื่อการเรียนรู้ต่างๆ
+
+ไม่ต้องกังวลเรื่องรูปแบบ AI จะจัดเรียงให้เป็นระเบียบ"></textarea>
+                </div>
+
+                <button class="generate-btn" onclick="generateStep1()">
+                    ✨ สร้าง Prompt ขั้นตอนที่ 1
+                </button>
+
+                <div class="result-section" id="result-step1">
+                    <div class="result-header">
+                        <span class="result-title">🎯 Prompt สำหรับจัดเรียงเนื้อหา</span>
+                        <button class="copy-btn" onclick="copyPrompt('step1')">📋 คัดลอก</button>
+                    </div>
+                    <div class="result-content" id="result-content-step1"></div>
+                </div>
+            </div>
+
+            <div class="arrow-connector" id="arrow-connector" style="display: none;">
+                ⬇️ นำผลลัพธ์จาก AI มาใส่ข้างล่าง ⬇️
+            </div>
+
+            <!-- Step 2 -->
+            <div class="step-container step-2" id="step-2">
+                <div class="step-title">
+                    <span class="step-badge">ขั้นตอนที่ 2</span>
+                    🎮 สร้าง Prompt สำหรับ Canva
+                </div>
+                <div class="step-description">
+                    นำเนื้อหาที่ได้รับการจัดเรียงแล้วจาก AI (ผลลัพธ์ของขั้นตอนที่ 1) มาใส่ในช่องด้านล่าง
+                </div>
+
+                <div class="form-group">
+                    <label for="organized-content">📋 เนื้อหาที่จัดเรียงแล้ว (จาก AI):</label>
+                    <textarea 
+                        id="organized-content" 
+                        placeholder="นำผลลัพธ์ที่ได้จากการใช้ Prompt ขั้นตอนที่ 1 กับ AI มาวางตรงนี้...
+
+ควรประกอบด้วย:
+- ส่วนที่ 1: นิยามและความหมาย
+- ส่วนที่ 2: หลักการและกระบวนการ  
+- ส่วนที่ 3: แนวการประยุกต์ใช้
+- แบบทดสอบ Drag & Drop
+- แบบทดสอบสี่ตัวเลือก พร้อมเฉลย"></textarea>
+                </div>
+
+                <button class="generate-btn" id="generate-step2-btn" onclick="generateStep2()" disabled>
+                    🎮 สร้าง Prompt สำหรับ Canva
+                </button>
+
+                <div class="result-section" id="result-step2">
+                    <div class="result-header">
+                        <span class="result-title">🎯 Prompt สำหรับ Canva AI</span>
+                        <button class="copy-btn" onclick="copyPrompt('step2')">📋 คัดลอก</button>
+                    </div>
+                    <div class="result-content" id="result-content-step2"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="notification" id="notification">✅ คัดลอกสำเร็จ!</div>
+
+    <script>
+        let step1Prompt = '';
+        let step2Prompt = '';
+
+        function generateStep1() {
+            const rawContent = document.getElementById('raw-content');
+            const resultSection = document.getElementById('result-step1');
+            const resultContent = document.getElementById('result-content-step1');
+            const step2Container = document.getElementById('step-2');
+            const arrowConnector = document.getElementById('arrow-connector');
+            
+            if (!rawContent.value.trim()) {
+                alert('⚠️ กรุณาใส่เนื้อหาที่ต้องการจัดเรียงก่อน');
+                return;
+            }
+
+            step1Prompt = `# คำสั่งจัดเรียงเนื้อหาวิชา
+
+โปรดเรียบเรียงเนื้อหาที่ให้มาใหม่ให้อยู่ในรูปแบบมาตรฐาน พร้อมสร้างแบบทดสอบประกอบ โดยมีโครงสร้างดังนี้:
+
+---
+
+## ส่วนที่ 1: การจัดเรียงเนื้อหา
+จัดเรียงเนื้อหาให้อยู่ในรูปแบบ 3 ส่วนหลัก:
+
+### 1. นิยามและความหมาย
+- อธิบายความหมายของแนวคิด/หลักการหลัก
+- ให้คำจำกัดความที่ชัดเจน
+- ยกตัวอย่างประกอบความเข้าใจ
+
+### 2. หลักการและกระบวนการ
+- อธิบายหลักการทำงาน/กระบวนการขั้นตอน
+- แจกแจงรายละเอียดย่อย
+- อธิบายความสัมพันธ์ระหว่างส่วนต่างๆ
+
+### 3. แนวการประยุกต์ใช้
+- ยกตัวอย่างการนำไปใช้ในชีวิตจริง
+- แสดงประโยชน์และข้อจำกัด
+- เสนอแนะแนวทางการพัฒนาต่อยอด
+
+---
+
+## ส่วนที่ 2: การสร้างแบบทดสอบ
+สร้างแบบทดสอบสี่ตัวเลือก (3 ข้อ) โดย:
+- ข้อ 1: ทดสอบความเข้าใจพื้นฐาน (นิยาม/ความหมาย)
+- ข้อ 2: ทดสอบการประยุกต์หลักการ
+- ข้อ 3: ทดสอบการวิเคราะห์/สังเคราะห์
+- แต่ละข้อมี 4 ตัวเลือก (ก, ข, ค, ง)
+- ระบุเฉลยพร้อมคำอธิบายเหตุผล
+
+---
+
+## เนื้อหาที่ต้องการให้เรียบเรียง:
+
+${rawContent.value}
+
+---
+
+## ข้อกำหนดเพิ่มเติม:
+1. ใช้ภาษาที่เข้าใจง่าย เหมาะสมกับระดับการศึกษา
+2. จัดรูปแบบให้อ่านง่าย มีหัวข้อย่อยชัดเจน
+3. ตัวอย่างต้องเป็นสิ่งที่ผู้เรียนคุ้นเคย
+4. แบบทดสอบต้องครอบคลุมเนื้อหาทั้ง 3 ส่วน
+5. ระดับความยากของแบบทดสอบให้เหมาะสมกับเนื้อหา
+
+โปรดจัดเรียงเนื้อหาและสร้างแบบทดสอบตามรูปแบบที่กำหนด`;
+
+            resultContent.textContent = step1Prompt;
+            resultSection.style.display = 'block';
+            
+            // Enable step 2
+            step2Container.classList.add('active');
+            arrowConnector.style.display = 'block';
+            
+            resultSection.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function generateStep2() {
+            const organizedContent = document.getElementById('organized-content');
+            const resultSection = document.getElementById('result-step2');
+            const resultContent = document.getElementById('result-content-step2');
+            
+            if (!organizedContent.value.trim()) {
+                alert('⚠️ กรุณาใส่เนื้อหาที่จัดเรียงแล้วจาก AI ก่อน');
+                return;
+            }
+
+            // Extract only definitions and tests from organized content
+            const organizedText = organizedContent.value;
+            
+            // Extract definition section
+            let definitionSection = '';
+            const defMatch = organizedText.match(/(?:###?\s*1\.?\s*นิยามและความหมาย|###?\s*นิยามและความหมาย)([\s\S]*?)(?=###?\s*2\.?|###?\s*หลักการ|$)/i);
+            if (defMatch) {
+                definitionSection = defMatch[1].trim();
+            }
+            
+            // Extract test sections
+            let testSections = '';
+            const testMatch = organizedText.match(/(?:##\s*ส่วนที่\s*2|##\s*การสร้างแบบทดสอบ)([\s\S]*?)$/i);
+            if (testMatch) {
+                testSections = testMatch[1].trim();
+            }
+            
+            // If extraction failed, use a more general approach
+            if (!definitionSection && !testSections) {
+                const lines = organizedText.split('\n');
+                let inDefinition = false;
+                let inTest = false;
+                
+                for (let line of lines) {
+                    if (line.includes('นิยาม') && line.includes('ความหมาย')) {
+                        inDefinition = true;
+                        inTest = false;
+                        continue;
+                    }
+                    if (line.includes('หลักการ') || line.includes('กระบวนการ') || line.includes('ประยุกต์')) {
+                        inDefinition = false;
+                        inTest = false;
+                    }
+                    if (line.includes('แบบทดสอบ') || line.includes('Drag') || line.includes('ตัวเลือก')) {
+                        inDefinition = false;
+                        inTest = true;
+                    }
+                    
+                    if (inDefinition) {
+                        definitionSection += line + '\n';
+                    }
+                    if (inTest) {
+                        testSections += line + '\n';
+                    }
+                }
+            }
+
+            step2Prompt = `สร้างเกมตอบคำถามเรื่อง หัวข้อที่สรุปข้างบน แบบสี่ตัวเลือก ประกอบด้วย 4 หน้า:
+
+หน้าที่ 1: หน้ากรอกชื่อผู้เล่น
+- ช่องกรอกชื่อและปุ่ม "เริ่มเกม"
+- ออกแบบสีสันน่าสนใจ
+
+หน้าที่ 2: หน้าอธิบายความรู้
+- อธิบายความรู้พื้นฐานเกี่ยวกับหัวข้อ
+- ใช้ภาษาที่เข้าใจง่าย
+
+หน้าที่ 3: หน้าเกมตอบคำถาม (3 ข้อ)
+ใช้คำถามจากแบบทดสอบนี้:
+${testSections || 'ไม่พบข้อมูลแบบทดสอบ กรุณาใส่แบบทดสอบจากผลลัพธ์ขั้นตอนที่ 1'}
+
+สร้างเป็นแบบ 4 ตัวเลือก
+- แต่ละข้อมี A,B,C,D
+- ระบุเฉลยพร้อมอธิบาย
+
+หน้าที่ 4: หน้าสรุปคะแนน
+- แสดงชื่อ คะแนน เปอร์เซ็นต์
+- ประเมินผล: 80-100% ยอดเยี่ยม, 60-79% ดีมาก, 40-59% พอใช้, <40% ควรศึกษาใหม่
+- ปุ่ม "เล่นใหม่"
+
+ตั้งค่า: ธีมสีฟ้า-ขาว, เวลา 45วิ/ข้อ, แสดงเฉลยก่อนข้อถัดไป, เสียงเอฟเฟกต์
+
+ใส่ข้อความพัฒนาโดยครู....`;
+
+            resultContent.textContent = step2Prompt;
+            resultSection.style.display = 'block';
+            resultSection.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function copyPrompt(step) {
+            const content = step === 'step1' ? step1Prompt : step2Prompt;
+            const notification = document.getElementById('notification');
+            
+            const textArea = document.createElement('textarea');
+            textArea.value = content;
+            textArea.style.position = 'fixed';
+            textArea.style.left = '-9999px';
+            document.body.appendChild(textArea);
+            textArea.select();
+            textArea.setSelectionRange(0, 99999);
+            
+            try {
+                document.execCommand('copy');
+                notification.textContent = step === 'step1' ? 
+                    '✅ คัดลอก Prompt ขั้นตอนที่ 1 สำเร็จ!' : 
+                    '✅ คัดลอก Prompt ขั้นตอนที่ 2 สำเร็จ!';
+                notification.classList.add('show');
+                setTimeout(() => {
+                    notification.classList.remove('show');
+                }, 3000);
+            } catch (err) {
+                alert('ไม่สามารถคัดลอกได้โดยอัตโนมัติ กรุณาเลือกและคัดลอกด้วยตนเอง');
+            }
+            
+            document.body.removeChild(textArea);
+        }
+
+        // Enable step 2 button when content is entered
+        document.getElementById('organized-content').addEventListener('input', function() {
+            const generateBtn = document.getElementById('generate-step2-btn');
+            if (this.value.trim()) {
+                generateBtn.disabled = false;
+                this.style.borderColor = '#28a745';
+            } else {
+                generateBtn.disabled = true;
+                this.style.borderColor = '#e1e8ed';
+            }
+        });
+
+        // Enable step 1 input effects
+        document.getElementById('raw-content').addEventListener('input', function() {
+            if (this.value.length > 0) {
+                this.style.borderColor = '#28a745';
+            } else {
+                this.style.borderColor = '#e1e8ed';
+            }
+        });
+    </script>
+</body>
+</html>
